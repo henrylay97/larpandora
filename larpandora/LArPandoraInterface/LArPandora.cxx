@@ -143,7 +143,7 @@ namespace lar_pandora {
 
     m_inputSettings.m_pPrimaryPandora = m_pPrimaryPandora;
     m_outputSettings.m_pPrimaryPandora = m_pPrimaryPandora;
-
+    
     // Pass basic LArTPC information to pandora instances
     LArPandoraInput::CreatePandoraLArTPCs(m_inputSettings, driftVolumeList);
 
@@ -228,7 +228,8 @@ namespace lar_pandora {
       evt, m_inputSettings, m_driftVolumeMap, artHits, idToHitMap);
 
     if (m_enableMCParticles && (m_disableRealDataCheck || !evt.isRealData())) {
-      LArPandoraInput::CreatePandoraMCParticles(m_inputSettings,
+      LArPandoraInput::CreatePandoraMCParticles(evt,
+						m_inputSettings,
                                                 artMCTruthToMCParticles,
                                                 artMCParticlesToMCTruth,
                                                 generatorArtMCParticleVector);

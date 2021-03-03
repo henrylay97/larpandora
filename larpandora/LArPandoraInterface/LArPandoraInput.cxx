@@ -487,7 +487,8 @@ namespace lar_pandora {
   //------------------------------------------------------------------------------------------------------------------------------------------
 
   void
-  LArPandoraInput::CreatePandoraMCParticles(const Settings& settings,
+  LArPandoraInput::CreatePandoraMCParticles(const art::Event& evt,
+					    const Settings& settings,
                                             const MCTruthToMCParticles& truthToParticleMap,
                                             const MCParticlesToMCTruth& particleToTruthMap,
                                             const RawMCParticleVector& generatorMCParticleVector)
@@ -537,6 +538,18 @@ namespace lar_pandora {
 
         // Create Pandora 3D MC Particle
         lar_content::LArMCParticleParameters mcParticleParameters;
+	
+	geo::GeometryCore const* geom = art::ServiceHandle<geo::Geometry>()->provider();
+	detinfo::DetectorClocksData clockData = art::ServiceHandle<detinfo::DetectorClocksService>()->DataFor(evt);
+	detinfo::DetectorPropertiesData propD = art::ServiceHandle<detinfo::DetectorPropertiesService>()->DataFor(evt);
+	util::GeometryUtilities geomU = util::GeometryUtilities(*geom,clockData,propD);
+	float xCorrection = 0;
+	for(auto pID : geom->IteratePlaneIDs()){
+	  xCorrection = propD.ConvertTicksToX(clockData.TPCG4Time2Tick(neutrino.Nu().T())-clockData.Time2Tick(clockData.BeamGateTime()),pID) 
+	    - propD.ConvertTicksToX(0,pID);
+	  break;
+	}
+	if(neutrino.Nu().Vx() >  0) xCorrection = -xCorrection;
 
         try {
           mcParticleParameters.m_nuanceCode = neutrino.InteractionType();
@@ -544,9 +557,9 @@ namespace lar_pandora {
           mcParticleParameters.m_momentum =
             pandora::CartesianVector(neutrino.Nu().Px(), neutrino.Nu().Py(), neutrino.Nu().Pz());
           mcParticleParameters.m_vertex =
-            pandora::CartesianVector(neutrino.Nu().Vx(), neutrino.Nu().Vy(), neutrino.Nu().Vz());
+            pandora::CartesianVector(neutrino.Nu().Vx() + xCorrection, neutrino.Nu().Vy(), neutrino.Nu().Vz());
           mcParticleParameters.m_endpoint =
-            pandora::CartesianVector(neutrino.Nu().Vx(), neutrino.Nu().Vy(), neutrino.Nu().Vz());
+            pandora::CartesianVector(neutrino.Nu().Vx() + xCorrection, neutrino.Nu().Vy(), neutrino.Nu().Vz());
           mcParticleParameters.m_particleId = neutrino.Nu().PdgCode();
           mcParticleParameters.m_mcParticleType = pandora::MC_3D;
           mcParticleParameters.m_pParentAddress = (void*)((intptr_t)neutrinoID);
@@ -576,7 +589,7 @@ namespace lar_pandora {
         const MCParticleVector& particleVector = iter1->second;
 
         for (MCParticleVector::const_iterator iter2 = particleVector.begin(),
-                                              iterEnd2 = particleVector.end();
+	       iterEnd2 = particleVector.end();
              iter2 != iterEnd2;
              ++iter2) {
           const art::Ptr<simb::MCParticle> particle = *iter2;

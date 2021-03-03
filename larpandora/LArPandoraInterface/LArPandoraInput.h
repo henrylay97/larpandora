@@ -15,6 +15,10 @@ namespace detinfo {
 #include "larpandora/LArPandoraInterface/ILArPandora.h"
 #include "larpandora/LArPandoraInterface/LArPandoraGeometry.h"
 #include "larpandora/LArPandoraInterface/LArPandoraHelper.h"
+#include "lardata/DetectorInfoServices/DetectorClocksService.h"
+#include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
+#include "lardata/Utilities/GeometryUtilities.h"
+#include "larcore/Geometry/Geometry.h"
 
 namespace lar_pandora {
 
@@ -46,6 +50,8 @@ namespace lar_pandora {
       double m_mips_if_negative;                 ///<
       double m_mips_to_gev;                      ///<
       double m_recombination_factor;             ///<
+
+     
     };
 
     /**
@@ -99,7 +105,8 @@ namespace lar_pandora {
      *  @param  truthToParticles  mapping from MC truth to MC particles
      *  @param  particlesToTruth  mapping from MC particles to MC truth
      */
-    static void CreatePandoraMCParticles(const Settings& settings,
+    static void CreatePandoraMCParticles(const art::Event& evt,
+					 const Settings& settings,
                                          const MCTruthToMCParticles& truthToParticles,
                                          const MCParticlesToMCTruth& particlesToTruth,
                                          const RawMCParticleVector& generatorMCParticleVector);
@@ -185,7 +192,7 @@ namespace lar_pandora {
                           const double hit_Charge,
                           const geo::View_t hit_View);
   };
-
+  
 } // namespace lar_pandora
 
 #endif // #ifndef LAR_PANDORA_INPUT_H
