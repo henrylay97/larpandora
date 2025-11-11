@@ -65,6 +65,8 @@ private:
   const std::string fShowerOpeningAngleLabel;
   const std::string fShowerdEdxLabel;
   const std::string fShowerBestPlaneLabel;
+  const std::string fShowerBestPlaneEnergyLabel;
+  const std::string fShowerBestPlanedEdxLabel;
 
   //fcl tools
   std::vector<std::unique_ptr<ShowerRecoTools::IShowerTool>> fShowerTools;
@@ -121,7 +123,9 @@ reco::shower::LArPandoraModularShowerCreation::LArPandoraModularShowerCreation(
   , fShowerLengthLabel(pset.get<std::string>("ShowerLengthLabel"))
   , fShowerOpeningAngleLabel(pset.get<std::string>("ShowerOpeningAngleLabel"))
   , fShowerdEdxLabel(pset.get<std::string>("ShowerdEdxLabel"))
-  , fShowerBestPlaneLabel(pset.get<std::string>("ShowerBestPlaneLabel"))
+  , fShowerBestPlaneLabel(pset.get<std::string>("ShowerBestPlaneLabel", ""))
+  , fShowerBestPlaneEnergyLabel(pset.get<std::string>("ShowerBestPlaneEnergyLabel", ""))
+  , fShowerBestPlanedEdxLabel(pset.get<std::string>("ShowerBestPlanedEdxLabel", ""))
 {
   //Intialise the tools
   auto tool_psets = pset.get<std::vector<fhicl::ParameterSet>>("ShowerFinderTools");
@@ -300,7 +304,9 @@ void reco::shower::LArPandoraModularShowerCreation::produce(art::Event& evt)
             << "The dEdx is not set in the element holder. bailing" << std::endl;
         continue;
       }
-      if (!showerEleHolder.CheckElement(fShowerBestPlaneLabel)) {
+      if (!showerEleHolder.CheckElement(fShowerBestPlaneLabel) ||
+	  (!showerEleHolder.CheckElement(fShowerBestPlaneEnergyLabel)
+	   && !showerEleHolder.CheckElement(fShowerBestPlanedEdxLabel))) {
         if (fVerbose)
           mf::LogError("LArPandoraModularShowerCreation")
             << "The BestPlane is not set in the element holder. bailing" << std::endl;
@@ -347,6 +353,8 @@ void reco::shower::LArPandoraModularShowerCreation::produce(art::Event& evt)
     std::vector<double> ShowerEnergy(fNumPlanes, -999);
     std::vector<double> ShowerdEdx(fNumPlanes, -999);
     int BestPlane(-999);
+    int BestPlaneEnergy(-999);
+    int BestPlanedEdx(-999);
     double ShowerLength(-999);
     double ShowerOpeningAngle(-999);
 
@@ -368,6 +376,10 @@ void reco::shower::LArPandoraModularShowerCreation::produce(art::Event& evt)
       err += showerEleHolder.GetElementAndError(fShowerdEdxLabel, ShowerdEdx, ShowerdEdxErr);
     if (showerEleHolder.CheckElement(fShowerBestPlaneLabel))
       err += showerEleHolder.GetElement(fShowerBestPlaneLabel, BestPlane);
+    if (showerEleHolder.CheckElement(fShowerBestPlaneEnergyLabel))
+      err += showerEleHolder.GetElement(fShowerBestPlaneEnergyLabel, BestPlaneEnergy);
+    if (showerEleHolder.CheckElement(fShowerBestPlanedEdxLabel))
+      err += showerEleHolder.GetElement(fShowerBestPlanedEdxLabel, BestPlanedEdx);
     if (showerEleHolder.CheckElement(fShowerLengthLabel))
       err += showerEleHolder.GetElement(fShowerLengthLabel, ShowerLength);
     if (showerEleHolder.CheckElement(fShowerOpeningAngleLabel))
@@ -397,6 +409,8 @@ void reco::shower::LArPandoraModularShowerCreation::produce(art::Event& evt)
       }
       std::cout << std::endl;
       std::cout << "Shower Best Plane: " << BestPlane << std::endl;
+      std::cout << "Shower Best Plane Energy: " << BestPlaneEnergy << std::endl;
+      std::cout << "Shower Best Plane dEdx: " << BestPlanedEdx << std::endl;
       std::cout << "Shower Length: " << ShowerLength << std::endl;
       std::cout << "Shower Opening Angle: " << ShowerOpeningAngle << std::endl;
 
@@ -415,6 +429,14 @@ void reco::shower::LArPandoraModularShowerCreation::produce(art::Event& evt)
         << " compared to Nplanes: " << fNumPlanes << std::endl;
     }
 
+    if(showerEleHolder.CheckElement(fShowerBestPlaneLabel) &&
+       !showerEleHolder.CheckElement(fShowerBestPlaneEnergyLabel) &&
+       !showerEleHolder.CheckElement(fShowerBestPlanedEdxLabel))
+      {
+	BestPlaneEnergy = BestPlane;
+	BestPlanedEdx   = BestPlane;
+      }
+
     //Make the shower
     using namespace geo::vect;
     recob::Shower shower(convertTo<TVector3>(ShowerDirection),
@@ -425,7 +447,8 @@ void reco::shower::LArPandoraModularShowerCreation::produce(art::Event& evt)
                          ShowerEnergyErr,
                          ShowerdEdx,
                          ShowerdEdxErr,
-                         BestPlane,
+                         BestPlaneEnergy,
+                         BestPlanedEdx,
                          util::kBogusI,
                          ShowerLength,
                          ShowerOpeningAngle);
