@@ -124,7 +124,7 @@ namespace ShowerRecoTools {
       if (TPC == vtxTPC) { (trackHits.at(hitWire.Plane)).push_back(hit); }
     }
 
-    int bestHitsPlane = 0;
+    int bestHitsPlane = -999;
     int bestPlaneHits = 0;
     int bestPlane = -999;
     double minPitch = 999;
@@ -230,7 +230,7 @@ namespace ShowerRecoTools {
     //Set The best plane
     if (fMaxHitPlane) { bestPlane = bestHitsPlane; }
 
-    if (bestPlane == -999) {
+    if (bestPlane == -999 && dEdxVec != std::vector<double>({-999, -999, -999})) {
       throw cet::exception("ShowerUnidirectiondEdx") << "No best plane set";
     }
     else {
