@@ -304,9 +304,9 @@ void reco::shower::LArPandoraModularShowerCreation::produce(art::Event& evt)
             << "The dEdx is not set in the element holder. bailing" << std::endl;
         continue;
       }
-      if (!showerEleHolder.CheckElement(fShowerBestPlaneLabel) ||
-	  (!showerEleHolder.CheckElement(fShowerBestPlaneEnergyLabel)
-	   && !showerEleHolder.CheckElement(fShowerBestPlanedEdxLabel))) {
+      if (!(showerEleHolder.CheckElement(fShowerBestPlaneLabel) ||
+	    (showerEleHolder.CheckElement(fShowerBestPlaneEnergyLabel)
+	     && showerEleHolder.CheckElement(fShowerBestPlanedEdxLabel)))) {
         if (fVerbose)
           mf::LogError("LArPandoraModularShowerCreation")
             << "The BestPlane is not set in the element holder. bailing" << std::endl;
