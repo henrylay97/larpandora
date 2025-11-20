@@ -650,7 +650,7 @@ namespace lar_pandora {
 
       for (unsigned int i = 0; i < clusters.size(); ++i) {
         LArPandoraOutput::AddAssociation(
-          event, instanceLabel, nextClusterId - 1, hitVectors.at(i), outputClustersToHits);
+          event, instanceLabel, nextClusterId - (clusters.size() - i), hitVectors.at(i), outputClustersToHits);
         outputClusters->push_back(clusters.at(i));
       }
     }
